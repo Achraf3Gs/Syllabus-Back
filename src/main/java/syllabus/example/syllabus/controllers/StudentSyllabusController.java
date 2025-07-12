@@ -1,9 +1,14 @@
 package syllabus.example.syllabus.gradeSheet.controllers;
 
 import jakarta.validation.Valid;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import syllabus.example.syllabus.entities.AssignSyllabusRequest;
 import syllabus.example.syllabus.entities.StudentSyllabus;
+import syllabus.example.syllabus.entities.StudentSyllabusDTO;
+import syllabus.example.syllabus.entities.StudentSyllabusService;
 import syllabus.example.syllabus.repositories.StudentSyllabusRepository;
 
 
@@ -11,31 +16,27 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/student-syllabus")
 @CrossOrigin(origins = "*")
+@RequestMapping("/studentPilot/{studentId}/syllabi")
 public class StudentSyllabusController {
 
     @Autowired
-    private StudentSyllabusRepository studentSyllabusRepository;
+    private StudentSyllabusService studentSyllabusService;
 
-    @GetMapping("/{id}")
-    public StudentSyllabus getStudentSyllabus(@PathVariable Long id) {
-        return studentSyllabusRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("StudentSyllabus not found with id: " + id));
+    @PostMapping
+    public ResponseEntity<StudentSyllabus> assignSyllabus(
+            @PathVariable Long studentId,
+            @Valid @RequestBody AssignSyllabusRequest request) throws BadRequestException {
+
+        StudentSyllabus assignment = studentSyllabusService.assignSyllabus(studentId, request.getSyllabusId());
+        return ResponseEntity.ok(assignment);
     }
 
-    @GetMapping("/student/{studentId}")
-    public List<StudentSyllabus> getSyllabiForStudent(@PathVariable Long studentId) {
-        return studentSyllabusRepository.findByStudentId(studentId);
+    // ✅ New GET endpoint
+    @GetMapping
+    public ResponseEntity<List<StudentSyllabusDTO>> getSyllabiForStudent(@PathVariable Long studentId) {
+        List<StudentSyllabusDTO> syllabi = studentSyllabusService.getSyllabiForStudent(studentId);
+        return ResponseEntity.ok(syllabi);
     }
 
-    @PostMapping("/add")
-    public StudentSyllabus create(@Valid @RequestBody StudentSyllabus studentSyllabus) {
-        return studentSyllabusRepository.save(studentSyllabus);
-    }
-
-    @GetMapping("/list")
-    public List<StudentSyllabus> getAll() {
-        return (List<StudentSyllabus>) studentSyllabusRepository.findAll();
-    }
 }
